@@ -54,18 +54,29 @@ int main()
     //float vertsList[c];
     P_SEED = 1010101;
 
-    Image checked = GenImageChecked(2, 2, 1, 1, RED, GREEN);
-    Texture2D texture = LoadTextureFromImage(checked);
-    UnloadImage(checked);
+    //Image checked = GenImageChecked(2, 2, 1, 1, RED, GREEN);
+    //Texture2D texture = LoadTextureFromImage(checked);
+    //UnloadImage(checked);
 
     // Define our custom camera to look into our 3d world
     Camera camera = { 0 };
     InitCamera(&camera);
 
-    Mesh mesh = GenMesh();
+    //HeightMap.png
+
+   //Image image = LoadImage("resources/HeightMap.png");     // Load heightmap image (RAM)
+    Image image = LoadImage("resources/wgen_x0_y0.png");     // Load heightmap image (RAM)
+    Texture2D texture = LoadTextureFromImage(image);        // Convert image to texture (VRAM)
+
+    Mesh mesh = GenMeshHeightmap(image, (Vector3) { 1000, 200, 1000}); // Generate heightmap mesh (RAM and VRAM)
     Model model = LoadModelFromMesh(mesh);
+
+    //Mesh mesh = GenMesh();
+    //Model model = LoadModelFromMesh(mesh);
     model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
-    Vector3 position = { 0.0f, -20.0f, 0.0f };
+    Vector3 position = { -500.0f, -10.0f, -500.0f };
+
+    UnloadImage(image);             // Unload heightmap image from RAM, already uploaded to VRAM
 
     DisableCursor();                    // Limit cursor to relative movement inside the windowd
     // Main game loop
@@ -147,7 +158,6 @@ void ResetGame()
 
 Mesh GenMesh(void)
 {
-
     Mesh mesh = { 0 };
     // NOTE: One vertex per pixel
     int r = rowCount * 2;
