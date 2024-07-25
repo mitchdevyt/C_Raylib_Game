@@ -3,6 +3,7 @@
 #include "rlgl.h"
 #include "Input.h"
 #include "perlin.h"
+#include "TerrainMeshGen.h"
 
 #include "Engine/EngineTypes.h"
 
@@ -18,13 +19,14 @@
 void InGameUpdate();
 void InGameRender();
 void ResetGame();
-Mesh GenMesh(void);
 Model GetHeigtMapMesh();
 Model LoadSkyBox();
 
 struct Game game;
 float deltaTime;
 int rowCount = 100;
+
+float heightMapY = 10;
 
 void Init()
 {
@@ -35,7 +37,7 @@ void Init()
 
 void InitCamera(Camera* camera)
 {
-    camera->position = (Vector3){ 0.0f, 20.0f, 0.0f };     // Camera position
+    camera->position = (Vector3){ 0.0f, 10.0f, 0.0f };     // Camera position
     camera->target = (Vector3){ -1.0f, -1.0f, -1.0f };          // Camera looking at point
     camera->up = (Vector3){ 0.0f, 1.0f, 0.0f };              // Camera up vector (rotation towards target)
     camera->fovy = 45.0f;                                    // Camera field-of-view Y
@@ -62,31 +64,11 @@ int main()
     Camera camera = { 0 };
     InitCamera(&camera);
 
-    //HeightMap.png
-    //Model skybox = LoadSkyBox();
     // Load skybox model
-    Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
-    Model skybox = LoadModelFromMesh(cube);
+    Model skybox = LoadSkyBox();
 
-    // Set this to true to use an HDR Texture, Note that raylib must be built with HDR Support for this to work SUPPORT_FILEFORMAT_HDR
-
-    // Load skybox shader and set required locations
-    // NOTE: Some locations are automatically set at shader loading
-    skybox.materials[0].shader = LoadShader(TextFormat("resources/shaders/glsl%i/SkyBox/skybox.vs", GLSL_VERSION),
-        TextFormat("resources/shaders/glsl%i/SkyBox/skybox.fs", GLSL_VERSION));
-
-    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "environmentMap"), (int[1]) { MATERIAL_MAP_CUBEMAP }, SHADER_UNIFORM_INT);
-    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "doGamma"), (int[1]) { 0 }, SHADER_UNIFORM_INT);
-    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "vflipped"), (int[1]) { 0 }, SHADER_UNIFORM_INT);
-
-
-    Image img = LoadImage("resources/Skyboxes/space.png");
-    skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = LoadTextureCubemap(img, CUBEMAP_LAYOUT_AUTO_DETECT);    // CUBEMAP_LAYOUT_PANORAMA
-    UnloadImage(img);
-
-
-    //Model heightMapModel = GetHeigtMapMesh();
-
+    Model heightMapModel = GetHeigtMapMesh();
+    float tris = heightMapModel.meshes[0].triangleCount;
     Vector3 heigtMapModelPosition = { 0.0f, 0.0f, 0.0f };
 
     DisableCursor();                    // Limit cursor to relative movement inside the windowd
@@ -110,7 +92,10 @@ int main()
             InGameUpdate();
             //built in camera controller
             UpdateCamera(&camera, CAMERA_FREE);
-
+            if (IsKeyDown(KEY_Y))
+                heigtMapModelPosition.y -= 10;
+            if (IsKeyDown(KEY_U))
+                heigtMapModelPosition.y += 10;
             //----------------------------------------------------------------------------------               
             // Draw
             //----------------------------------------------------------------------------------
@@ -118,18 +103,20 @@ int main()
             ClearBackground(BLACK);
 
             BeginMode3D(camera);
+                rlDisableBackfaceCulling();
                 rlDisableDepthMask();
-                DrawModel(skybox, (Vector3) { 0, 0, 0 }, 1.0f, WHITE);
+                    DrawModel(skybox, (Vector3) { 0, 0, 0 }, 1.0f, WHITE);
                 rlEnableBackfaceCulling();
                 rlEnableDepthMask();
 
-                //DrawModel(heightMapModel, heigtMapModelPosition, 1.0f, RED);
-                DrawGrid(10, 1.0);
+            DrawModel(heightMapModel, heigtMapModelPosition, 1.0f, RED);
+            DrawGrid(10, 1.0);
 
-            EndMode3D(); 
-           
+            EndMode3D();
+
             DrawFPS(10, 10);
             DrawText(TextFormat("dt: %f", deltaTime), 10, 30, 20, RED);
+            DrawText(TextFormat("dt: %f", tris), 10, 60, 20, RED);
             EndDrawing();
             //InGameRender();
             break;
@@ -171,145 +158,6 @@ void ResetGame()
 }
 
 
-Mesh GenMesh(void)
-{
-    Mesh mesh = { 0 };
-    // NOTE: One vertex per pixel
-    int r = rowCount * 2;
-    mesh.triangleCount = r * r;    // One quad every four pixels
-
-    mesh.vertexCount = mesh.triangleCount * 3;
-
-    mesh.vertices = (float*)MemAlloc(mesh.vertexCount * 3 * sizeof(float));
-    mesh.normals = (float*)MemAlloc(mesh.vertexCount * 3 * sizeof(float));
-    mesh.texcoords = (float*)MemAlloc(mesh.vertexCount * 2 * sizeof(float));
-
-    int texLength = mesh.vertexCount * 2;
-
-    int vCounter = 0;       // Used to count vertices float by float
-    int tcCounter = 0;      // Used to count texcoords float by float
-    int nCounter = 0;       // Used to count normals float by float
-
-    Vector3 scaleFactor = { 5, 5, 5 };
-
-    Vector3 vA = { 0 };
-    Vector3 vB = { 0 };
-    Vector3 vC = { 0 };
-    Vector3 vN = { 0 };
-
-    float xx = 0;
-    float zz = 0;
-    
-    float freq = 0.4;
-    int depth = 10;
-    int yDown = 10;
-    for (int z = 0; z < rowCount; z++)
-    {
-        for (int x = 0; x < rowCount; x++)
-        {
-            // Fill vertices array with data
-            //----------------------------------------------------------
-
-            // one triangle - 3 vertex
-            xx = (float)x * scaleFactor.x;
-            zz = (float)z * scaleFactor.z;
-            mesh.vertices[vCounter] = xx;
-            float p = perlin2d(xx, zz, freq, depth) * yDown;
-            mesh.vertices[vCounter + 1] = p;
-            mesh.vertices[vCounter + 2] = zz;
-
-            xx = (float)x * scaleFactor.x;
-            zz = (float)(z + 1) * scaleFactor.z;
-            mesh.vertices[vCounter + 3] = xx;
-            mesh.vertices[vCounter + 4] = perlin2d(xx, zz, freq, depth) * yDown;
-            mesh.vertices[vCounter + 5] = zz;
-
-            xx = (float)(x + 1) * scaleFactor.x;
-            zz = (float)z * scaleFactor.z;
-            mesh.vertices[vCounter + 6] = xx;
-            mesh.vertices[vCounter + 7] = perlin2d(xx, zz, freq, depth) * yDown;
-            mesh.vertices[vCounter + 8] = zz;
-
-            // Another triangle - 3 vertex
-            xx = mesh.vertices[vCounter + 6];
-            zz = mesh.vertices[vCounter + 8];
-            mesh.vertices[vCounter + 9] = mesh.vertices[vCounter + 6];
-            mesh.vertices[vCounter + 10] = perlin2d(xx, zz, freq, depth) * yDown;// mesh.vertices[vCounter + 7];
-            mesh.vertices[vCounter + 11] = mesh.vertices[vCounter + 8];
-
-            xx = mesh.vertices[vCounter + 3];
-            zz = mesh.vertices[vCounter + 5];
-            mesh.vertices[vCounter + 12] = mesh.vertices[vCounter + 3];
-            mesh.vertices[vCounter + 13] = perlin2d(xx, zz, freq, depth) * yDown;// mesh.vertices[vCounter + 4];
-            mesh.vertices[vCounter + 14] = mesh.vertices[vCounter + 5];
-
-            xx = (float)(x + 1) * scaleFactor.x;
-            zz = (float)(z + 1) * scaleFactor.z;
-            mesh.vertices[vCounter + 15] = xx;
-            mesh.vertices[vCounter + 16] = perlin2d(xx, zz, freq, depth) * yDown;
-            mesh.vertices[vCounter + 17] = zz;
-            vCounter += 18;     // 6 vertex, 18 floats
-
-            // Fill texcoords array with data
-            //--------------------------------------------------------------
-            mesh.texcoords[tcCounter] = 0;
-            mesh.texcoords[tcCounter + 1] = 0;
-
-            mesh.texcoords[tcCounter + 2] = 0;
-            mesh.texcoords[tcCounter + 3] = 1;
-
-            mesh.texcoords[tcCounter + 4] = 1;
-            mesh.texcoords[tcCounter + 5] = 0;
-
-            mesh.texcoords[tcCounter + 6] = 1;
-            mesh.texcoords[tcCounter + 7] = 0;
-
-            mesh.texcoords[tcCounter + 8] = 0;
-            mesh.texcoords[tcCounter + 9] = 1;
-
-            mesh.texcoords[tcCounter + 10] = 1;
-            mesh.texcoords[tcCounter + 11] = 1;
-            tcCounter += 12;    // 6 texcoords, 12 floats
-
-            mesh.normals[nCounter ] = 0;
-            mesh.normals[nCounter + 1] = 1;
-            mesh.normals[nCounter + 2] = 0;
-
-            mesh.normals[nCounter + 3] = 0;
-            mesh.normals[nCounter + 4] = 1;
-            mesh.normals[nCounter + 5] = 0;
-
-            mesh.normals[nCounter + 6] = 0;
-            mesh.normals[nCounter + 7] = 1;
-            mesh.normals[nCounter + 8] = 0;
-            // Fill normals array with data
-            //--------------------------------------------------------------
-            for (int i = 0; i < 18; i += 9)
-            {
-                mesh.normals[nCounter + i] = 0;
-                mesh.normals[nCounter + i + 1] = 1;
-                mesh.normals[nCounter + i + 2] = 0;
-
-                mesh.normals[nCounter + i + 3] = 0;
-                mesh.normals[nCounter + i + 4] = 1;
-                mesh.normals[nCounter + i + 5] = 0;
-
-                mesh.normals[nCounter + i + 6] = 0;
-                mesh.normals[nCounter + i + 7] = 1;
-                mesh.normals[nCounter + i + 8] = 0;
-            }
-
-            nCounter += 18;     // 6 vertex, 18 floats
-        }
-    }
-
-
-    // Upload vertex data to GPU (static mesh)
-    UploadMesh(&mesh, false);
-
-    return mesh;
-}
-
 void SetupInput(Inputs* input)
 {
     input->gamePadOrMnK = false;
@@ -338,16 +186,40 @@ void SetupInput(Inputs* input)
 
 Model GetHeigtMapMesh()
 {
-    Image image = LoadImage("resources/TerrainMap2.png");     // Load heightmap image (RAM)
-    Texture2D texture = LoadTextureFromImage(image);        // Convert image to texture (VRAM)
+    Image hmap = LoadImage("resources/TerrainMap2.png");     // Load heightmap image (RAM)
+    Image redimage = LoadImage("resources/terrain/TFF_Terrain_Grass_1A_D.png");     // Load heightmap image (RAM)
+    Image greenimage = LoadImage("resources/terrain/TFF_Terrain_Sand_1A_D.png");     // Load heightmap image (RAM)
+    Image yellowimage = LoadImage("resources/terrain/TFF_Terrain_Grass_2A_D.png");     // Load heightmap image (RAM)
+    Image blueimage = LoadImage("resources/terrain/TFF_Terrain_Earth_2A_D.png");     // Load heightmap image (RAM)
+  
+    Texture2D redTexture = LoadTextureFromImage(redimage);        // Convert image to texture (VRAM)
+    Texture2D greenTexture = LoadTextureFromImage(greenimage);        // Convert image to texture (VRAM)
+    Texture2D yellowTexture = LoadTextureFromImage(yellowimage);        // Convert image to texture (VRAM)
+    Texture2D blueTexture = LoadTextureFromImage(blueimage);        // Convert image to texture (VRAM)
 
-    Mesh mesh = GenMeshHeightmap(image, (Vector3) { 500, 50, 500 }); // Generate heightmap mesh (RAM and VRAM)
+    Mesh mesh = GenMeshHeightmap2(hmap, (Vector3) { 50, heightMapY, 50 }); // Generate heightmap mesh (RAM and VRAM)
     Model model = LoadModelFromMesh(mesh);
 
-    //Mesh mesh = GenMesh();
-    //Model model = LoadModelFromMesh(mesh);
-    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
-    UnloadImage(image);             // Unload heightmap image from RAM, already uploaded to VRAM
+    model.materials[0].shader = LoadShader(TextFormat("resources/shaders/glsl%i/Terrain/terrain.vs", GLSL_VERSION),
+        TextFormat("resources/shaders/glsl%i/Terrain/terrain.fs", GLSL_VERSION));
+    //model.materials[0].shader = LoadShader(0,TextFormat("resources/shaders/glsl%i/Terrain/terrain.fs", GLSL_VERSION));
+
+    model.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = redTexture;
+    model.materials[0].maps[MATERIAL_MAP_METALNESS].texture = greenTexture;
+    model.materials[0].maps[MATERIAL_MAP_NORMAL].texture = yellowTexture;
+    model.materials[0].maps[MATERIAL_MAP_ROUGHNESS].texture = blueTexture;
+
+
+    // Get shader locations
+    int maxHeight = GetShaderLocation(model.materials[0].shader, "maxHeight");
+
+    // Set shader values (they can be changed later)
+    SetShaderValue(model.materials[0].shader, maxHeight, &heightMapY, SHADER_UNIFORM_FLOAT);
+
+    UnloadImage(redimage);             // Unload heightmap image from RAM, already uploaded to VRAM
+    UnloadImage(greenimage);             // Unload heightmap image from RAM, already uploaded to VRAM
+    UnloadImage(yellowimage);             // Unload heightmap image from RAM, already uploaded to VRAM
+    UnloadImage(blueimage);             // Unload heightmap image from RAM, already uploaded to VRAM
 
     return model;
 }
@@ -359,7 +231,6 @@ Model LoadSkyBox()
     Model skybox = LoadModelFromMesh(cube);
 
     // Set this to true to use an HDR Texture, Note that raylib must be built with HDR Support for this to work SUPPORT_FILEFORMAT_HDR
-    bool useHDR = false;
 
     // Load skybox shader and set required locations
     // NOTE: Some locations are automatically set at shader loading
@@ -367,19 +238,15 @@ Model LoadSkyBox()
         TextFormat("resources/shaders/glsl%i/SkyBox/skybox.fs", GLSL_VERSION));
 
     SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "environmentMap"), (int[1]) { MATERIAL_MAP_CUBEMAP }, SHADER_UNIFORM_INT);
-    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "doGamma"), (int[1]) { useHDR ? 1 : 0 }, SHADER_UNIFORM_INT);
-    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "vflipped"), (int[1]) { useHDR ? 1 : 0 }, SHADER_UNIFORM_INT);
+    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "doGamma"), (int[1]) { 0 }, SHADER_UNIFORM_INT);
+    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "vflipped"), (int[1]) { 0 }, SHADER_UNIFORM_INT);
 
-    // Load cubemap shader and setup required shader locations
-    Shader shdrCubemap = LoadShader(TextFormat("resources/shaders/glsl%i/SkyBox/cubemap.vs", GLSL_VERSION),
-        TextFormat("resources/shaders/glsl%i/SkyBox/cubemap.fs", GLSL_VERSION));
 
-    SetShaderValue(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]) { 0 }, SHADER_UNIFORM_INT);
-   
-    Image img = LoadImage("resources/Skyboxes/space.png");
+
+    Image img = LoadImage("resources/Skyboxes/skybox.png");
     skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = LoadTextureCubemap(img, CUBEMAP_LAYOUT_AUTO_DETECT);    // CUBEMAP_LAYOUT_PANORAMA
     UnloadImage(img);
-    
+
     return skybox;
 }
 

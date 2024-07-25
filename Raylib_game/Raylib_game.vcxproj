@@ -133,6 +133,7 @@
     <ClInclude Include="Engine\EngineTypes.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="perlin.h" />
+    <ClInclude Include="TerrainMeshGen.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Raylib_game.c" />

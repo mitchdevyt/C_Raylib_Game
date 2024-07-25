@@ -24,6 +24,9 @@
     <ClInclude Include="perlin.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="TerrainMeshGen.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Raylib_game.c">

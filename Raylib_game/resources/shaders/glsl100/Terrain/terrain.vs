@@ -2,23 +2,25 @@
 
 // Input vertex attributes
 attribute vec3 vertexPosition;
+attribute vec2 vertexTexCoord;
+attribute vec3 vertexNormal;
+attribute vec4 vertexColor;
 
 // Input uniform values
-uniform mat4 matProjection;
-uniform mat4 matView;
+uniform mat4 mvp;
 
 // Output vertex attributes (to fragment shader)
+varying vec2 fragTexCoord;
 varying vec3 fragPosition;
+
+// NOTE: Add here your custom variables
 
 void main()
 {
-    // Calculate fragment position based on model transformations
+    // Send vertex attributes to fragment shader
+    fragTexCoord = vertexTexCoord;
     fragPosition = vertexPosition;
 
-    // Remove translation from the view matrix
-    mat4 rotView = mat4(mat3(matView));
-    vec4 clipPos = matProjection*rotView*vec4(vertexPosition, 1.0);
-
     // Calculate final vertex position
-    gl_Position = clipPos;
+    gl_Position = mvp*vec4(vertexPosition, 1.0);
 }
