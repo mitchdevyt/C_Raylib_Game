@@ -19,6 +19,8 @@ void InGameUpdate();
 void InGameRender();
 void ResetGame();
 Mesh GenMesh(void);
+Model GetHeigtMapMesh();
+Model LoadSkyBox();
 
 struct Game game;
 float deltaTime;
@@ -33,8 +35,8 @@ void Init()
 
 void InitCamera(Camera* camera)
 {
-    camera->position = (Vector3){ 0.0f, 5.0f, 0.0f };     // Camera position
-    camera->target = (Vector3){ -1.0f, 0.0f, -1.0f };          // Camera looking at point
+    camera->position = (Vector3){ 0.0f, 20.0f, 0.0f };     // Camera position
+    camera->target = (Vector3){ -1.0f, -1.0f, -1.0f };          // Camera looking at point
     camera->up = (Vector3){ 0.0f, 1.0f, 0.0f };              // Camera up vector (rotation towards target)
     camera->fovy = 45.0f;                                    // Camera field-of-view Y
     camera->projection = CAMERA_PERSPECTIVE;
@@ -50,8 +52,6 @@ int main()
     Init();
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
-    //const int c = rowCount * rowCount;
-    //float vertsList[c];
     P_SEED = 1010101;
 
     //Image checked = GenImageChecked(2, 2, 1, 1, RED, GREEN);
@@ -63,20 +63,31 @@ int main()
     InitCamera(&camera);
 
     //HeightMap.png
+    //Model skybox = LoadSkyBox();
+    // Load skybox model
+    Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
+    Model skybox = LoadModelFromMesh(cube);
 
-   //Image image = LoadImage("resources/HeightMap.png");     // Load heightmap image (RAM)
-    Image image = LoadImage("resources/wgen_x0_y0.png");     // Load heightmap image (RAM)
-    Texture2D texture = LoadTextureFromImage(image);        // Convert image to texture (VRAM)
+    // Set this to true to use an HDR Texture, Note that raylib must be built with HDR Support for this to work SUPPORT_FILEFORMAT_HDR
 
-    Mesh mesh = GenMeshHeightmap(image, (Vector3) { 1000, 200, 1000}); // Generate heightmap mesh (RAM and VRAM)
-    Model model = LoadModelFromMesh(mesh);
+    // Load skybox shader and set required locations
+    // NOTE: Some locations are automatically set at shader loading
+    skybox.materials[0].shader = LoadShader(TextFormat("resources/shaders/glsl%i/SkyBox/skybox.vs", GLSL_VERSION),
+        TextFormat("resources/shaders/glsl%i/SkyBox/skybox.fs", GLSL_VERSION));
 
-    //Mesh mesh = GenMesh();
-    //Model model = LoadModelFromMesh(mesh);
-    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
-    Vector3 position = { -500.0f, -10.0f, -500.0f };
+    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "environmentMap"), (int[1]) { MATERIAL_MAP_CUBEMAP }, SHADER_UNIFORM_INT);
+    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "doGamma"), (int[1]) { 0 }, SHADER_UNIFORM_INT);
+    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "vflipped"), (int[1]) { 0 }, SHADER_UNIFORM_INT);
 
-    UnloadImage(image);             // Unload heightmap image from RAM, already uploaded to VRAM
+
+    Image img = LoadImage("resources/Skyboxes/space.png");
+    skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = LoadTextureCubemap(img, CUBEMAP_LAYOUT_AUTO_DETECT);    // CUBEMAP_LAYOUT_PANORAMA
+    UnloadImage(img);
+
+
+    //Model heightMapModel = GetHeigtMapMesh();
+
+    Vector3 heigtMapModelPosition = { 0.0f, 0.0f, 0.0f };
 
     DisableCursor();                    // Limit cursor to relative movement inside the windowd
     // Main game loop
@@ -107,9 +118,13 @@ int main()
             ClearBackground(BLACK);
 
             BeginMode3D(camera);
+                rlDisableDepthMask();
+                DrawModel(skybox, (Vector3) { 0, 0, 0 }, 1.0f, WHITE);
+                rlEnableBackfaceCulling();
+                rlEnableDepthMask();
 
-            DrawModel(model, position, 1.0f, RED);
-            DrawGrid(10, 1.0);
+                //DrawModel(heightMapModel, heigtMapModelPosition, 1.0f, RED);
+                DrawGrid(10, 1.0);
 
             EndMode3D(); 
            
@@ -319,6 +334,53 @@ void SetupInput(Inputs* input)
     input->inputMap.l1 = KEY_Y;
     input->inputMap.l2 = KEY_Y;
     input->inputMap.l3 = KEY_Y;
+}
+
+Model GetHeigtMapMesh()
+{
+    Image image = LoadImage("resources/TerrainMap2.png");     // Load heightmap image (RAM)
+    Texture2D texture = LoadTextureFromImage(image);        // Convert image to texture (VRAM)
+
+    Mesh mesh = GenMeshHeightmap(image, (Vector3) { 500, 50, 500 }); // Generate heightmap mesh (RAM and VRAM)
+    Model model = LoadModelFromMesh(mesh);
+
+    //Mesh mesh = GenMesh();
+    //Model model = LoadModelFromMesh(mesh);
+    model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+    UnloadImage(image);             // Unload heightmap image from RAM, already uploaded to VRAM
+
+    return model;
+}
+//https://crystallotus.itch.io/skybox-textures
+Model LoadSkyBox()
+{
+    // Load skybox model
+    Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
+    Model skybox = LoadModelFromMesh(cube);
+
+    // Set this to true to use an HDR Texture, Note that raylib must be built with HDR Support for this to work SUPPORT_FILEFORMAT_HDR
+    bool useHDR = false;
+
+    // Load skybox shader and set required locations
+    // NOTE: Some locations are automatically set at shader loading
+    skybox.materials[0].shader = LoadShader(TextFormat("resources/shaders/glsl%i/SkyBox/skybox.vs", GLSL_VERSION),
+        TextFormat("resources/shaders/glsl%i/SkyBox/skybox.fs", GLSL_VERSION));
+
+    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "environmentMap"), (int[1]) { MATERIAL_MAP_CUBEMAP }, SHADER_UNIFORM_INT);
+    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "doGamma"), (int[1]) { useHDR ? 1 : 0 }, SHADER_UNIFORM_INT);
+    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "vflipped"), (int[1]) { useHDR ? 1 : 0 }, SHADER_UNIFORM_INT);
+
+    // Load cubemap shader and setup required shader locations
+    Shader shdrCubemap = LoadShader(TextFormat("resources/shaders/glsl%i/SkyBox/cubemap.vs", GLSL_VERSION),
+        TextFormat("resources/shaders/glsl%i/SkyBox/cubemap.fs", GLSL_VERSION));
+
+    SetShaderValue(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]) { 0 }, SHADER_UNIFORM_INT);
+   
+    Image img = LoadImage("resources/Skyboxes/space.png");
+    skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = LoadTextureCubemap(img, CUBEMAP_LAYOUT_AUTO_DETECT);    // CUBEMAP_LAYOUT_PANORAMA
+    UnloadImage(img);
+    
+    return skybox;
 }
 
 
