@@ -6,8 +6,9 @@ Mesh GenMeshHeightmap2(Image heightmap, Vector3 size)
 {
 #define GRAY_VALUE(c) ((float)(c.r + c.g + c.b)/3.0f)
 
-    Mesh mesh = { 0 };
 
+    Mesh mesh = { 0 };
+    
     int mapX = heightmap.width;
     int mapZ = heightmap.height;
 
@@ -131,6 +132,8 @@ Mesh GenMeshHeightmap2(Image heightmap, Vector3 size)
 
     return mesh;
 }
+
+
 /*Mesh GenMesh(void)
 {
     Mesh mesh = { 0 };

@@ -141,6 +141,7 @@
   <ItemGroup>
     <None Include="resources\shaders\glsl100\Terrain\terrain.fs" />
     <None Include="resources\shaders\glsl100\Terrain\terrain.vs" />
+    <None Include="resources\shaders\glsl100\Terrain\Terrain2.fs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

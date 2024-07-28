@@ -40,5 +40,8 @@
     <None Include="resources\shaders\glsl100\Terrain\terrain.vs">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="resources\shaders\glsl100\Terrain\Terrain2.fs">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
