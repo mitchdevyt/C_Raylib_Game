@@ -21,6 +21,7 @@ void InGameRender();
 void ResetGame();
 Model GetHeigtMapMesh();
 Model LoadSkyBox();
+void CheckShouldFullScreen();
 
 struct Game game;
 float deltaTime;
@@ -96,6 +97,7 @@ int main()
                 heigtMapModelPosition.y -= 10;
             if (IsKeyDown(KEY_U))
                 heigtMapModelPosition.y += 10;
+            CheckShouldFullScreen();
             //----------------------------------------------------------------------------------               
             // Draw
             //----------------------------------------------------------------------------------
@@ -267,3 +269,26 @@ Model LoadSkyBox()
 }
 
 
+void CheckShouldFullScreen()
+{
+    if (IsKeyPressed(KEY_P))
+    {
+        // see what display we are on right now
+        int display = GetCurrentMonitor();
+
+
+        if (IsWindowFullscreen())
+        {
+            // if we are full screen, then go back to the windowed size
+            SetWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+        }
+        else
+        {
+            // if we are not full screen, set the window size to match the monitor we are on
+            SetWindowSize(GetMonitorWidth(display), GetMonitorHeight(display));
+        }
+
+        // toggle the state
+        ToggleFullscreen();
+    }
+}
