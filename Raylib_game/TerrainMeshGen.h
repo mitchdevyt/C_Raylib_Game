@@ -28,7 +28,8 @@ Mesh GenMeshHeightmap2(Image heightmap, Vector3 size)
     int tcCounter = 0;      // Used to count texcoords float by float
     int nCounter = 0;       // Used to count normals float by float
 
-    Vector3 scaleFactor = { size.x / (mapX - 1), size.y / 255.0f, size.z / (mapZ - 1) };
+    Vector3 scaleFactor = { size.x , size.y , size.z };
+    //Vector3 scaleFactor = { size.x / (mapX - 1), size.y / 255.0f, size.z / (mapZ - 1) };
 
     Vector3 vA = { 0 };
     Vector3 vB = { 0 };

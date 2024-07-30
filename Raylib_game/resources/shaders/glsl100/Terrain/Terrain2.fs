@@ -42,8 +42,11 @@ void main()
     sand_rockgrass_weight -= min_rockgrass_height;
     sand_rockgrass_weight /= max_sand_height - min_rockgrass_height;
 
-    vec4 c = mix(snowTex,grassTex,rock_grass_weight);
-    //vec4 b = mix(sandTex,c,sand_rockgrass_weight);
-    vec4 b = mix(sandTex,c,0.0);
-    gl_FragColor = snowTex;         
+    vec4 c = mix(grassTex,snowTex,rock_grass_weight);
+    vec4 b = mix(sandTex,c,sand_rockgrass_weight);
+    //vec4 b = mix(sandTex,c,0.0);
+
+    if(fragPosition.y<1.0)
+       c=sandTex;
+    gl_FragColor = c;
 }

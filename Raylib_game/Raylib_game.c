@@ -13,13 +13,13 @@
 #define GLSL_VERSION            100
 #endif
 
-#define SCREEN_WIDTH 1920
-#define SCREEN_HEIGHT 1080
+#define SCREEN_WIDTH 1280
+#define SCREEN_HEIGHT 720
 
 void InGameUpdate();
 void InGameRender();
 void ResetGame();
-Model GetHeigtMapMesh();
+Model GetHeightMapMesh();
 Model LoadSkyBox();
 void CheckShouldFullScreen();
 
@@ -68,9 +68,9 @@ int main()
     // Load skybox model
     Model skybox = LoadSkyBox();
 
-    Model heightMapModel = GetHeigtMapMesh();
+    Model heightMapModel = GetHeightMapMesh();
     float tris = heightMapModel.meshes[0].triangleCount;
-    Vector3 heigtMapModelPosition = { 0.0f, 0.0f, 0.0f };
+    Vector3 heigtMapModelPosition = { 0.0f, -10.0f, 0.0f };
 
     DisableCursor();                    // Limit cursor to relative movement inside the windowd
     // Main game loop
@@ -186,18 +186,18 @@ void SetupInput(Inputs* input)
     input->inputMap.l3 = KEY_Y;
 }
 
-Model GetHeigtMapMesh()
+Model GetHeightMapMesh()
 {
     Image hmap = LoadImage("resources/TerrainMap2.png");     // Load heightmap image (RAM)
-    //Image redimage = LoadImage("resources/terrain/TFF_Terrain_Grass_1A_D.png");     // Load heightmap image (RAM)
-    //Image greenimage = LoadImage("resources/terrain/TFF_Terrain_Earth_2A_D.png");     // Load heightmap image (RAM)
-    //Image yellowimage = LoadImage("resources/terrain/TFF_Terrain_Grass_2A_D.png");     // Load heightmap image (RAM)
-    //Image blueimage = LoadImage("resources/terrain/TFF_Terrain_Sand_1A_D.png");     // Load heightmap image (RAM)
+    Image redimage = LoadImage("resources/terrain/TFF_Terrain_Grass_1A_D.png");     // Load heightmap image (RAM)
+    Image greenimage = LoadImage("resources/terrain/TFF_Terrain_Earth_2A_D.png");     // Load heightmap image (RAM)
+    Image yellowimage = LoadImage("resources/terrain/TFF_Terrain_Grass_2A_D.png");     // Load heightmap image (RAM)
+    Image blueimage = LoadImage("resources/terrain/TFF_Terrain_Sand_1A_D.png");     // Load heightmap image (RAM)
   
-    Image redimage = LoadImage("resources/terrain/red.png");     // Load heightmap image (RAM)
-    Image greenimage = LoadImage("resources/terrain/green.png");     // Load heightmap image (RAM)
-    Image yellowimage = LoadImage("resources/terrain/blue.png");     // Load heightmap image (RAM)
-    Image blueimage = LoadImage("resources/terrain/yellow.png");     // Load heightmap image (RAM)
+    //Image redimage = LoadImage("resources/terrain/red.png");     // Load heightmap image (RAM)
+    //Image greenimage = LoadImage("resources/terrain/green.png");     // Load heightmap image (RAM)
+    //Image yellowimage = LoadImage("resources/terrain/blue.png");     // Load heightmap image (RAM)
+    //Image blueimage = LoadImage("resources/terrain/yellow.png");     // Load heightmap image (RAM)
 
 
     Texture2D redTexture = LoadTextureFromImage(redimage);        // Convert image to texture (VRAM)
@@ -205,13 +205,13 @@ Model GetHeigtMapMesh()
     Texture2D yellowTexture = LoadTextureFromImage(yellowimage);        // Convert image to texture (VRAM)
     Texture2D blueTexture = LoadTextureFromImage(blueimage);        // Convert image to texture (VRAM)
 
-    Mesh mesh = GenMeshHeightmap2(hmap, (Vector3) { 50, heightMapY, 50 }); // Generate heightmap mesh (RAM and VRAM)
+    Mesh mesh = GenMeshHeightmap2(hmap, (Vector3) { 10, heightMapY, 10 }); // Generate heightmap mesh (RAM and VRAM)
     Model model = LoadModelFromMesh(mesh);
 
     model.materials[0].shader = LoadShader(TextFormat("resources/shaders/glsl%i/Terrain/terrain.vs", GLSL_VERSION),
         TextFormat("resources/shaders/glsl%i/Terrain/Terrain2.fs", GLSL_VERSION));
     //model.materials[0].shader = LoadShader(0,TextFormat("resources/shaders/glsl%i/Terrain/terrain.fs", GLSL_VERSION));
-
+    
     model.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = redTexture;
     model.materials[0].maps[MATERIAL_MAP_METALNESS].texture = greenTexture;
     model.materials[0].maps[MATERIAL_MAP_NORMAL].texture = yellowTexture;
@@ -233,6 +233,9 @@ Model GetHeigtMapMesh()
     SetShaderValue(model.materials[0].shader, max_grass_slope, &grassSlope, SHADER_UNIFORM_FLOAT);
     SetShaderValue(model.materials[0].shader, min_rockgrass_height, &rockGrassHeight, SHADER_UNIFORM_FLOAT);
     SetShaderValue(model.materials[0].shader, max_sand_height, &sandHeight, SHADER_UNIFORM_FLOAT);
+
+    model.materials[0].shader.locs[SHADER_LOC_MAP_NORMAL] = GetShaderLocation(model.materials[0].shader, "texture2");
+    model.materials[0].shader.locs[SHADER_LOC_MAP_ROUGHNESS] = GetShaderLocation(model.materials[0].shader, "texture3");
 
     UnloadImage(redimage);             // Unload heightmap image from RAM, already uploaded to VRAM
     UnloadImage(greenimage);             // Unload heightmap image from RAM, already uploaded to VRAM
