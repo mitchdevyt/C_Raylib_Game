@@ -46,7 +46,7 @@ void main()
     vec4 b = mix(sandTex,c,sand_rockgrass_weight);
     //vec4 b = mix(sandTex,c,0.0);
 
-    if(fragPosition.y<1.0)
+    if(fragPosition.y<6.0)
        c=sandTex;
     gl_FragColor = c;
 }

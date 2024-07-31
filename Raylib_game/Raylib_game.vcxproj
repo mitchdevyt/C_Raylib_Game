@@ -130,13 +130,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Defines.h" />
     <ClInclude Include="Engine\EngineTypes.h" />
+    <ClInclude Include="Includes.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="perlin.h" />
+    <ClInclude Include="Scene.h" />
+    <ClInclude Include="TerrainGameplayScene.h" />
     <ClInclude Include="TerrainMeshGen.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Input.c" />
     <ClCompile Include="Raylib_game.c" />
+    <ClCompile Include="Scene.c" />
+    <ClCompile Include="TerrainGameplayScene.c" />
+    <ClCompile Include="TerrainMeshGen.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\glsl100\Terrain\terrain.fs" />
