@@ -15,11 +15,20 @@ uniform float max_grass_slope;
 uniform float min_rockgrass_height;
 uniform float max_sand_height;
 
+
 uniform sampler2D texture0;
 uniform sampler2D texture1;
 uniform sampler2D texture2;
 uniform sampler2D texture3;
 
+
+/*void main()
+{
+    float normalizedHeight = clamp((fragPosition.y-minHeight)/(maxHeight-minHeight), 0.0, 1.0);
+
+
+
+}*/
 
 void main()
 {
@@ -28,6 +37,8 @@ void main()
     vec4 rockTex = texture2D(texture2, fragTexCoord);
     vec4 sandTex = texture2D(texture3, fragTexCoord);
     
+    //float normalizedHeight = clamp((fragPosition.y-0.0)/(10.0-0), 0.0, 1.0);
+
     float rock_grass_weight = normal.y;
 
     float sand_rockgrass_weight = fragPosition.y;
@@ -42,11 +53,11 @@ void main()
     sand_rockgrass_weight -= min_rockgrass_height;
     sand_rockgrass_weight /= max_sand_height - min_rockgrass_height;
 
-    vec4 c = mix(grassTex,snowTex,rock_grass_weight);
-    vec4 b = mix(sandTex,c,sand_rockgrass_weight);
+    vec4 c = mix(snowTex,grassTex,rock_grass_weight);
+    //vec4 b = mix(sandTex,c,normalizedHeight);
     //vec4 b = mix(sandTex,c,0.0);
 
-    if(fragPosition.y<6.0)
+    if(fragPosition.y< 20.0)
        c=sandTex;
     gl_FragColor = c;
 }

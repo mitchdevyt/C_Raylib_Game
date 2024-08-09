@@ -54,7 +54,7 @@ void SetupInput(Inputs* input)
 
 void GetHeightMapMesh(Model* model)
 {
-    Image hmap = LoadImage("resources/TerrainMap2.png");     // Load heightmap image (RAM)
+    Image hmap = LoadImage("resources/heightMap.png");     // Load heightmap image (RAM)
     Image redimage = LoadImage("resources/terrain/TFF_Terrain_Grass_1A_D.png");     // Load heightmap image (RAM)
     Image greenimage = LoadImage("resources/terrain/TFF_Terrain_Earth_2A_D.png");     // Load heightmap image (RAM)
     Image yellowimage = LoadImage("resources/terrain/TFF_Terrain_Grass_2A_D.png");     // Load heightmap image (RAM)
