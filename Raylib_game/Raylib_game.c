@@ -20,6 +20,13 @@ float deltaTime;
 Scene3DTerrain terrainGameplayScene;
 Vector3 heigtMapModelPosition = { 0.0f, -20.0f, 0.0f };
 
+Model groundModel;
+Model playerCapsule;
+
+Vector3 groundPos;
+Vector3 playerPos;
+
+
 void Init()
 {
     deltaTime = 0.0f;
@@ -191,12 +198,15 @@ void RenderTerrain()
 
 void InitPlayerTestCollisions()
 {
+    Mesh ground = GenMeshPlane(10.0, 10.0, 10, 10);
+    groundModel = LoadModelFromMesh(ground);
+    groundPos = (Vector3){ 0.0, 0.0, 0.0 };
 
+    playerPos = (Vector3){ 5.0, 10.0, 5.0 };
 }
 
 void UpdatePlayerTestCollisions()
 {
-
 }
 
 void RenderPlayerTestCollisions()
