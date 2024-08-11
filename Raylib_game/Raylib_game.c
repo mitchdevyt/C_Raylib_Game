@@ -187,7 +187,7 @@ void RenderTerrain()
 
         DrawFPS(10, 10);
         DrawText(TextFormat("dt: %f", deltaTime), 10, 30, 20, RED);
-        DrawText(TextFormat("min: %f  max: %f", minY,maxY), 10, 70, 20, RED);
+       // DrawText(TextFormat("min: %f  max: %f", minY,maxY), 10, 70, 20, RED);
     EndDrawing();
 }
 //End Terrain Logic

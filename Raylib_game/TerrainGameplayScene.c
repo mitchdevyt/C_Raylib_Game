@@ -55,10 +55,10 @@ void SetupInput(Inputs* input)
 void GetHeightMapMesh(Model* model)
 {
     Image hmap = LoadImage("resources/heightMap.png");     // Load heightmap image (RAM)
-    Image redimage = LoadImage("resources/terrain/TFF_Terrain_Grass_1A_D.png");     // Load heightmap image (RAM)
-    Image greenimage = LoadImage("resources/terrain/TFF_Terrain_Earth_2A_D.png");     // Load heightmap image (RAM)
-    Image yellowimage = LoadImage("resources/terrain/TFF_Terrain_Grass_2A_D.png");     // Load heightmap image (RAM)
-    Image blueimage = LoadImage("resources/terrain/TFF_Terrain_Sand_1A_D.png");     // Load heightmap image (RAM)
+    Image greenimage = LoadImage("resources/terrain/mntn_white_d.png");     // Load heightmap image (RAM)
+    Image redimage = LoadImage("resources/terrain/grass_green_d.png");     // Load heightmap image (RAM)
+    Image yellowimage = LoadImage("resources/terrain/yellow.png");     // Load heightmap image (RAM)
+    Image blueimage = LoadImage("resources/terrain/desert_sand_d.png");     // Load heightmap image (RAM)
 
     //Image redimage = LoadImage("resources/terrain/red.png");     // Load heightmap image (RAM)
     //Image greenimage = LoadImage("resources/terrain/green.png");     // Load heightmap image (RAM)
@@ -86,19 +86,19 @@ void GetHeightMapMesh(Model* model)
     // Get shader locations
     int min_rock_slope = GetShaderLocation(model->materials[0].shader, "min_rock_slope");
     int max_grass_slope = GetShaderLocation(model->materials[0].shader, "max_grass_slope");
-    int min_rockgrass_height = GetShaderLocation(model->materials[0].shader, "min_rockgrass_height");
     int max_sand_height = GetShaderLocation(model->materials[0].shader, "max_sand_height");
+    int min_sand_height = GetShaderLocation(model->materials[0].shader, "min_sand_height");
 
     float rockSlope = 0.5;
     float grassSlope = 0.9;
-    float rockGrassHeight = 2.0;
-    float sandHeight = 1.0;
+    float maxSandHeight = 30.0;
+    float minSandHeight = 0.0;
 
     // Set shader values (they can be changed later)
     SetShaderValue(model->materials[0].shader, min_rock_slope, &rockSlope, SHADER_UNIFORM_FLOAT);
     SetShaderValue(model->materials[0].shader, max_grass_slope, &grassSlope, SHADER_UNIFORM_FLOAT);
-    SetShaderValue(model->materials[0].shader, min_rockgrass_height, &rockGrassHeight, SHADER_UNIFORM_FLOAT);
-    SetShaderValue(model->materials[0].shader, max_sand_height, &sandHeight, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(model->materials[0].shader, max_sand_height, &maxSandHeight, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(model->materials[0].shader, min_sand_height, &minSandHeight, SHADER_UNIFORM_FLOAT);
 
     model->materials[0].shader.locs[SHADER_LOC_MAP_NORMAL] = GetShaderLocation(model->materials[0].shader, "texture2");
     model->materials[0].shader.locs[SHADER_LOC_MAP_ROUGHNESS] = GetShaderLocation(model->materials[0].shader, "texture3");
